@@ -12,9 +12,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum CreatorType {
 
-    TYPE1(1, Arrays.asList("UCyn-K7rZLXjGl7VXGweIlcA"));
-
-//    "UCTx3aCntDvkq-hGtOjKVSnQ", "UCy2WX3w5UyYFHBDHyWFKNUQ", "UC0htUSwcxfSGNfK_5Q28JkA"
+    TYPE1(1, Arrays.asList("UCyn-K7rZLXjGl7VXGweIlcA", "UCTx3aCntDvkq-hGtOjKVSnQ", "UCy2WX3w5UyYFHBDHyWFKNUQ", "UC0htUSwcxfSGNfK_5Q28JkA"));
 
     private final Integer typeNumber;
     private final List<String> creatorIdList;

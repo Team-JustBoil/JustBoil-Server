@@ -13,13 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import project.algorithm.justboilServer.common.exception.BusinessException;
+import project.algorithm.justboilServer.common.exception.ErrorType;
 import project.algorithm.justboilServer.model.Recipe;
 
 import java.io.IOException;
 import java.util.*;
 
-import static project.algorithm.justboilServer.common.exception.ErrorType.EMPTY_PLAYLIST_LIST_ERROR;
-import static project.algorithm.justboilServer.common.exception.ErrorType.EMPTY_VIDEOITEM_LIST_ERROR;
+import static project.algorithm.justboilServer.common.exception.ErrorType.*;
 
 @Slf4j
 @Service
@@ -33,7 +33,7 @@ public class YouTubeService {
     @Value("${youtube.key}")
     private String PRIVATE_KEY;
 
-    private static final long NUMBER_OF_VIDEOS_RETURNED = 500;
+    private static final long NUMBER_OF_VIDEOS_RETURNED = 50;
 
     public List<Recipe> getChannelVideos(String channelId) {
         try {
@@ -43,7 +43,7 @@ public class YouTubeService {
             }).setApplicationName("youtube-search-by-channelId").build();
 
             Set<String> playlistIdSet = getPlaylistSet(channelId);
-            Set<String> videoIdSet= getVideoIdList(playlistIdSet);
+            Set<String> videoIdSet = getVideoIdList(playlistIdSet);
 
             List<Video> videos = getVideos(videoIdSet);
 
@@ -53,89 +53,74 @@ public class YouTubeService {
                             video.getId(), video.getStatistics().getViewCount()))
                     .toList();
 
-        } catch (GoogleJsonResponseException e) {
-            System.err.println("There was a service error: " + e.getDetails().getCode() + " : " + e.getDetails().getMessage());
-        } catch (IOException e) {
-            System.err.println("There was an IO error: " + e.getCause() + " : " + e.getMessage());
-        } catch (Throwable t) {
-            t.printStackTrace();
+        } catch (Exception e) {
+            throw new BusinessException(EMPTY_RECIPE_LIST_ERROR);
         }
-
-        return null;
     }
 
     private Set<String> getPlaylistSet(String channelId) throws IOException {
-        ChannelListResponse channelListResponse = null;
+        Set<String> playlistSet = new HashSet<>();
         YouTube.Channels.List channel = youtube.channels().list("contentDetails");
-
         channel.setKey(PRIVATE_KEY);
         channel.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
         channel.setId(channelId);
 
-        channelListResponse = channel.execute();
-
-        Iterator<Channel> iteratorChannelResults = channelListResponse.getItems().iterator();
-        Set<String> playlistSet = new HashSet<>();
-
-        while (iteratorChannelResults.hasNext()) {
-            Channel curChannel = iteratorChannelResults.next();
-            String uploads = curChannel.getContentDetails().getRelatedPlaylists().getUploads();
-            playlistSet.add(uploads);
-        }
+        String nextPageToken = null;
+        do {
+            channel.setPageToken(nextPageToken);
+            ChannelListResponse response = channel.execute();
+            for (Channel channelItem : response.getItems()) {
+                String uploads = channelItem.getContentDetails().getRelatedPlaylists().getUploads();
+                playlistSet.add(uploads);
+            }
+            nextPageToken = response.getNextPageToken();
+        } while (nextPageToken != null);
 
         log.info("탐색한 playList 수: " + playlistSet.size());
-
         return playlistSet;
     }
 
     private Set<String> getVideoIdList(Set<String> playlistIdSet) throws IOException {
-
         Set<String> videoIdSet = new HashSet<>();
 
-        Iterator<String> iterator = playlistIdSet.iterator();
-        if (!iterator.hasNext()) {
-            throw new BusinessException(EMPTY_PLAYLIST_LIST_ERROR);
-        }
-
-        while (iterator.hasNext()) {
-            String curPlaylistId = iterator.next();
-
-            PlaylistItemListResponse playlistItemListResponse = null;
+        for (String playlistId : playlistIdSet) {
             YouTube.PlaylistItems.List playList = youtube.playlistItems().list("snippet, contentDetails");
-
             playList.setKey(PRIVATE_KEY);
             playList.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
-            playList.setPlaylistId(curPlaylistId);
-            playlistItemListResponse = playList.execute();
+            playList.setPlaylistId(playlistId);
 
-            Iterator<PlaylistItem> itemsIterator = playlistItemListResponse.getItems().iterator();
-
-            if (!itemsIterator.hasNext()) {
-                throw new BusinessException(EMPTY_VIDEOITEM_LIST_ERROR);
-            }
-            while (itemsIterator.hasNext()) {
-                PlaylistItem curVideo = itemsIterator.next();
-                videoIdSet.add(curVideo.getContentDetails().getVideoId());
-            }
+            String nextPageToken = null;
+            do {
+                playList.setPageToken(nextPageToken);
+                PlaylistItemListResponse playlistItemListResponse = playList.execute();
+                for (PlaylistItem item : playlistItemListResponse.getItems()) {
+                    videoIdSet.add(item.getContentDetails().getVideoId());
+                }
+                nextPageToken = playlistItemListResponse.getNextPageToken();
+            } while (nextPageToken != null);
         }
 
         log.info("탐색한 PlaylistItem 수: " + videoIdSet.size());
-
         return videoIdSet;
     }
 
     private List<Video> getVideos(Set<String> videoIdSet) throws IOException {
-        VideoListResponse videoListResponse = null;
-        YouTube.Videos.List video = youtube.videos().list("snippet, contentDetails, statistics");
+        List<Video> videos = new ArrayList<>();
+        List<String> videoIdList = new ArrayList<>(videoIdSet);
 
-        video.setKey(PRIVATE_KEY);
-        video.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
-        List<String> videoIdList = videoIdSet.stream().toList();
-        video.setId(String.join(",", videoIdList));
-        videoListResponse = video.execute();
+        // YouTube API의 한 번의 요청당 최대 비디오 ID 수는 50개입니다.
+        int maxResultsPerRequest = (int) NUMBER_OF_VIDEOS_RETURNED;
+        for (int i = 0; i < videoIdList.size(); i += maxResultsPerRequest) {
+            int end = Math.min(i + maxResultsPerRequest, videoIdList.size());
+            YouTube.Videos.List video = youtube.videos().list("snippet, contentDetails, statistics");
+            video.setKey(PRIVATE_KEY);
+            video.setId(String.join(",", videoIdList.subList(i, end)));
+            VideoListResponse videoListResponse = video.execute();
+            videos.addAll(videoListResponse.getItems());
+        }
 
-        log.info("탐색한 video 수: " + videoIdList.size());
-
-        return videoListResponse.getItems();
+        log.info("탐색한 video 수: " + videos.size());
+        return videos;
     }
+
 }
