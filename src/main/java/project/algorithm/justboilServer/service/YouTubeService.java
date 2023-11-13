@@ -9,6 +9,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import project.algorithm.justboilServer.common.exception.BusinessException;
@@ -20,6 +21,7 @@ import java.util.*;
 import static project.algorithm.justboilServer.common.exception.ErrorType.EMPTY_PLAYLIST_LIST_ERROR;
 import static project.algorithm.justboilServer.common.exception.ErrorType.EMPTY_VIDEOITEM_LIST_ERROR;
 
+@Slf4j
 @Service
 public class YouTubeService {
 
@@ -28,9 +30,10 @@ public class YouTubeService {
 
     private static YouTube youtube;
 
-    @Value("${youtube.private-key}")
-    private static String PRIVATE_KEY;
-    private static final long NUMBER_OF_VIDEOS_RETURNED = 100;
+    @Value("${youtube.key}")
+    private String PRIVATE_KEY;
+
+    private static final long NUMBER_OF_VIDEOS_RETURNED = 500;
 
     public List<Recipe> getChannelVideos(String channelId) {
         try {
@@ -39,17 +42,16 @@ public class YouTubeService {
                 }
             }).setApplicationName("youtube-search-by-channelId").build();
 
-            String apiKey = PRIVATE_KEY;
+            Set<String> playlistIdSet = getPlaylistSet(channelId);
+            Set<String> videoIdSet= getVideoIdList(playlistIdSet);
 
-            Set<String> playlistIdSet = getPlaylistSet(channelId, apiKey);
-            Set<String> videoIdSet= getVideoIdList(playlistIdSet, apiKey);
+            List<Video> videos = getVideos(videoIdSet);
 
-            List<Video> videos = getVideos(videoIdSet, apiKey);
-
-            List<Recipe> recipes = new ArrayList<>();
-            for (Video video : videos) {
-
-            }
+            return videos.stream()
+                    .map(video -> Recipe.of(channelId, video.getSnippet().getTitle(),
+                            video.getSnippet().getThumbnails().getDefault().getUrl(),
+                            video.getId(), video.getStatistics().getViewCount()))
+                    .toList();
 
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : " + e.getDetails().getMessage());
@@ -62,11 +64,11 @@ public class YouTubeService {
         return null;
     }
 
-    private Set<String> getPlaylistSet(String channelId, String apiKey) throws IOException {
+    private Set<String> getPlaylistSet(String channelId) throws IOException {
         ChannelListResponse channelListResponse = null;
         YouTube.Channels.List channel = youtube.channels().list("contentDetails");
 
-        channel.setKey(apiKey);
+        channel.setKey(PRIVATE_KEY);
         channel.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
         channel.setId(channelId);
 
@@ -80,10 +82,13 @@ public class YouTubeService {
             String uploads = curChannel.getContentDetails().getRelatedPlaylists().getUploads();
             playlistSet.add(uploads);
         }
+
+        log.info("탐색한 playList 수: " + playlistSet.size());
+
         return playlistSet;
     }
 
-    private Set<String> getVideoIdList(Set<String> playlistIdSet, String apiKey) throws IOException {
+    private Set<String> getVideoIdList(Set<String> playlistIdSet) throws IOException {
 
         Set<String> videoIdSet = new HashSet<>();
 
@@ -98,7 +103,7 @@ public class YouTubeService {
             PlaylistItemListResponse playlistItemListResponse = null;
             YouTube.PlaylistItems.List playList = youtube.playlistItems().list("snippet, contentDetails");
 
-            playList.setKey(apiKey);
+            playList.setKey(PRIVATE_KEY);
             playList.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
             playList.setPlaylistId(curPlaylistId);
             playlistItemListResponse = playList.execute();
@@ -114,18 +119,22 @@ public class YouTubeService {
             }
         }
 
+        log.info("탐색한 PlaylistItem 수: " + videoIdSet.size());
+
         return videoIdSet;
     }
 
-    private List<Video> getVideos(Set<String> videoIdSet, String apiKey) throws IOException {
+    private List<Video> getVideos(Set<String> videoIdSet) throws IOException {
         VideoListResponse videoListResponse = null;
         YouTube.Videos.List video = youtube.videos().list("snippet, contentDetails, statistics");
 
-        video.setKey(apiKey);
+        video.setKey(PRIVATE_KEY);
         video.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
         List<String> videoIdList = videoIdSet.stream().toList();
         video.setId(String.join(",", videoIdList));
         videoListResponse = video.execute();
+
+        log.info("탐색한 video 수: " + videoIdList.size());
 
         return videoListResponse.getItems();
     }

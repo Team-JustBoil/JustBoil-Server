@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -26,10 +28,10 @@ public class Recipe {
 
     private String youtubeId;
 
-    private Long viewCount;
+    private BigInteger viewCount;
 
     @Builder
-    public Recipe(String creatorId, String title, String thumbnail, String youtubeId, Long viewCount) {
+    public Recipe(String creatorId, String title, String thumbnail, String youtubeId, BigInteger viewCount) {
         this.creatorId = creatorId;
         this.title = title;
         this.thumbnail = thumbnail;
@@ -37,7 +39,7 @@ public class Recipe {
         this.viewCount = viewCount;
     }
 
-    public static Recipe of(String creatorId, String title, String thumbnail, String youtubeId, Long viewCount) {
+    public static Recipe of(String creatorId, String title, String thumbnail, String youtubeId, BigInteger viewCount) {
         return Recipe.builder()
                 .creatorId(creatorId)
                 .title(title)

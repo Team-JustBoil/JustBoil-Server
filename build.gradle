@@ -36,7 +36,10 @@ dependencies {
 	implementation 'com.google.apis:google-api-services-youtube:v3-rev222-1.25.0'
 
 	// mysql
-	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'mysql:mysql-connector-java:8.0.32'
+
+	// slf4j
+	implementation 'org.slf4j:slf4j-api'
 }
 
 tasks.named('bootBuildImage') {
