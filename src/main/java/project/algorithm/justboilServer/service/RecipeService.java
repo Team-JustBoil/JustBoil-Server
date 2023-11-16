@@ -4,17 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.algorithm.justboilServer.common.exception.BusinessException;
-import project.algorithm.justboilServer.common.exception.ErrorType;
 import project.algorithm.justboilServer.model.Recipe;
-import project.algorithm.justboilServer.model.dto.RecipeResponse;
-import project.algorithm.justboilServer.model.dto.ThreeRecipeResponse;
+import project.algorithm.justboilServer.dto.recipe.response.RecipeResponse;
+import project.algorithm.justboilServer.dto.recipe.response.ThreeRecipeResponse;
 import project.algorithm.justboilServer.repository.RecipeJpaRepository;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static project.algorithm.justboilServer.common.exception.ErrorType.EMPTY_RECIPE_LIST_ERROR;
 
@@ -60,7 +57,7 @@ public class RecipeService {
         topRecipes.add(RecipeResponse.of(recipeAtStartIndexPlusTwo));
 
 
-        return ThreeRecipeResponse.of(topRecipes, selectedFoodName);
+        return ThreeRecipeResponse.of(selectedFoodName, topRecipes);
     }
 
     private int partition(Recipe[] arr, int low, int high) {
