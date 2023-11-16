@@ -32,7 +32,7 @@ public class RecipeController {
         List<String> creatorIdList = findCreatorIdListByTypeNumber(request.getTypeNumber());
         int randomIndex = new Random().nextInt(recipeRandomList.size());
         String selectedFoodName = recipeRandomList.get(randomIndex);
-        return ApiResponse.success(PROCESS_SUCCESS, recipeService.getRecipeList(creatorIdList, selectedFoodName, request.getStartIndex()));
+        return ApiResponse.success(PROCESS_SUCCESS, recipeService.getRecipeList(creatorIdList, selectedFoodName, 0));
     }
 
     @GetMapping("/search")
