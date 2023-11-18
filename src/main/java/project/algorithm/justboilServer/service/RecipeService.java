@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.algorithm.justboilServer.common.exception.BusinessException;
 import project.algorithm.justboilServer.model.Recipe;
-import project.algorithm.justboilServer.dto.recipe.response.RecipeResponse;
-import project.algorithm.justboilServer.dto.recipe.response.ThreeRecipeResponse;
+import project.algorithm.justboilServer.dto.recipe.RecipeResponse;
+import project.algorithm.justboilServer.dto.recipe.ThreeRecipeResponse;
 import project.algorithm.justboilServer.repository.RecipeJpaRepository;
 
 import java.util.ArrayList;

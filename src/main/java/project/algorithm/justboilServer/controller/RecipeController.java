@@ -1,12 +1,8 @@
 package project.algorithm.justboilServer.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import project.algorithm.justboilServer.common.ApiResponse;
-import project.algorithm.justboilServer.dto.recipe.request.RandomRequest;
-import project.algorithm.justboilServer.dto.recipe.request.SearchRequest;
-import project.algorithm.justboilServer.dto.recipe.response.ThreeRecipeResponse;
+import project.algorithm.justboilServer.dto.recipe.ThreeRecipeResponse;
 import project.algorithm.justboilServer.service.RecipeService;
 
 import java.util.Arrays;
@@ -27,17 +23,18 @@ public class RecipeController {
         this.recipeService = recipeService;
     }
 
-    @GetMapping("/random")
-    public ApiResponse<ThreeRecipeResponse> getPopularVideos(@RequestBody RandomRequest request) {
-        List<String> creatorIdList = findCreatorIdListByTypeNumber(request.getTypeNumber());
+    @GetMapping("/random/{typeNumber}")
+    public ApiResponse<ThreeRecipeResponse> getPopularVideos(@PathVariable Integer typeNumber) {
+        List<String> creatorIdList = findCreatorIdListByTypeNumber(typeNumber);
         int randomIndex = new Random().nextInt(recipeRandomList.size());
         String selectedFoodName = recipeRandomList.get(randomIndex);
         return ApiResponse.success(PROCESS_SUCCESS, recipeService.getRecipeList(creatorIdList, selectedFoodName, 0));
     }
 
-    @GetMapping("/search")
-    public ApiResponse<ThreeRecipeResponse> getPopularVideos(@RequestBody SearchRequest request) {
-        List<String> creatorIdList = findCreatorIdListByTypeNumber(request.getTypeNumber());
-        return ApiResponse.success(PROCESS_SUCCESS, recipeService.getRecipeList(creatorIdList, request.getFoodName(), request.getStartIndex()));
+    @GetMapping("/search/{typeNumber}")
+    public ApiResponse<ThreeRecipeResponse> getPopularVideos(@PathVariable Integer typeNumber, @RequestParam String keyword, @RequestParam Integer index) {
+        List<String> creatorIdList = findCreatorIdListByTypeNumber(typeNumber);
+        return ApiResponse.success(PROCESS_SUCCESS, recipeService.getRecipeList(creatorIdList, keyword, index));
     }
+
 }

@@ -1,4 +1,4 @@
-package project.algorithm.justboilServer.dto.recipe.response;
+package project.algorithm.justboilServer.dto.recipe;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

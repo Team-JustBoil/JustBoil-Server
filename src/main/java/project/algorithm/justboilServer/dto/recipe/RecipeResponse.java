@@ -1,4 +1,4 @@
-package project.algorithm.justboilServer.dto.recipe.response;
+package project.algorithm.justboilServer.dto.recipe;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
