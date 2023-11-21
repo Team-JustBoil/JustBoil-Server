@@ -15,6 +15,10 @@ public record RecipeResponse(
        BigInteger viewCount
 ) {
     public static RecipeResponse of(Recipe recipe) {
+
+        if (recipe == null) {
+            return null;
+        }
         return new RecipeResponse(
                 recipe.getId(),
                 recipe.getTitle(),

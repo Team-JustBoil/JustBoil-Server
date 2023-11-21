@@ -79,6 +79,11 @@ public class RecipeService {
     }
 
     private Recipe quickselect(Recipe[] arr, int low, int high, int k) {
+
+        if (k > arr.length - 1) {
+            return null;
+        }
+
         if (low == high) {
             return arr[low];
         }
