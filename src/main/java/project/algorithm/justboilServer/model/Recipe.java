@@ -30,6 +30,8 @@ public class Recipe {
 
     private BigInteger viewCount;
 
+    private String summary;
+
     @Builder
     public Recipe(String creatorId, String title, String thumbnail, String youtubeId, BigInteger viewCount) {
         this.creatorId = creatorId;
