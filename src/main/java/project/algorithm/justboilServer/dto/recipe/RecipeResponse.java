@@ -12,7 +12,8 @@ public record RecipeResponse(
        String title,
        String thumbnail,
        String youtubeId,
-       BigInteger viewCount
+       BigInteger viewCount,
+       String summary
 ) {
     public static RecipeResponse of(Recipe recipe) {
 
@@ -24,7 +25,8 @@ public record RecipeResponse(
                 recipe.getTitle(),
                 recipe.getThumbnail(),
                 recipe.getYoutubeId(),
-                recipe.getViewCount()
+                recipe.getViewCount(),
+                recipe.getSummary()
         );
     }
 }
