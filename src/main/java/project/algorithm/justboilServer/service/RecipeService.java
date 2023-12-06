@@ -78,6 +78,12 @@ public class RecipeService {
         return i;
     }
 
+    private void swap(Recipe[] arr, int i, int j) {
+        Recipe temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
     private Recipe quickselect(Recipe[] arr, int low, int high, int k) {
 
         if (k > arr.length - 1) {
@@ -97,11 +103,5 @@ public class RecipeService {
         } else {
             return quickselect(arr, pivotIndex + 1, high, k);
         }
-    }
-
-    private void swap(Recipe[] arr, int i, int j) {
-        Recipe temp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = temp;
     }
 }
